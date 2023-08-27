@@ -67,7 +67,7 @@ class PhylogeneticTree:
                     l.append(dfs(tree, e.dest, root) + ":" + str(e.length))
             s = str(root)
             if len(l) >= 1:
-                s = "(" + ','.join(l) + ")" + str(root)
+                s = "(" + ','.join(l) + ")" + self.node_names[root]
             return s
 
         return dfs(self, 0, None)
@@ -104,10 +104,17 @@ class PhylogeneticTree:
                     l.append(dfs(tree, e.dest, root) + ":" + str(e.length / f))
             s = str(root)
             if len(l) >= 1:
-                s = "(" + ','.join(l) + ")" + str(root)
+                s = "(" + ','.join(l) + ")" + self.node_names[root]
             return s
 
         return dfs(self, 0, None)
+
+    def load_species_file(self, filename):
+        with open(filename, 'r') as fp:
+            lines = fp.readlines()
+            species = lines[1].strip().split()
+            for i in range(1,len(species)+1):
+                self.node_names[i] = species[i]
 
     def __repr__(self):
         p = "lamda: {},\
