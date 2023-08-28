@@ -34,7 +34,7 @@ def gen_pi_array(q_matrix):
     return linalg.lstsq(A, b)[0]
 
 
-class FelsensteinPrunner:
+class FelsensteinPruner:
     def __init__(self, tree, qmat=None, pi=None):
         self.tree = tree
         self.Q = qmat
@@ -52,6 +52,9 @@ class FelsensteinPrunner:
 
     def get_transition_matrix(self, time):
         return linalg.expm(self.Q * time)
+
+    def get_derivative_transition_matrix(self, time):
+        return np.matmul(self.Q, linalg.expm(self.Q * time))
 
     def relax_node(self, tree, root, parent):
         self.dp[root][:][:] = 1
@@ -117,5 +120,64 @@ class FelsensteinPrunner:
 
         mat = np.log(np.matmul(self.dp[root], self.pi)) - self.lg_factor[root]
         ans = np.sum(mat)
+        return ans
+
+    def compute_derivative_log_likelihood(self, root, edge_id, recompute_table=True):
+        mat = np.zeros(shape=(self.tree.number_of_sites,))
+
+        if recompute_table:
+            self.compute_likelihood_helper(self.tree, root, -1)
+
+        parent = -1
+        temp_dpP = np.ones(shape=self.dp[root].shape)
+        temp_lgP = np.zeros(shape=self.lg_factor[root].shape)
+        for e in self.tree.adjList[root]:
+            if e is None or e.id == -1:
+                break
+            if e.dest == parent:
+                continue
+
+            v = e.dest
+            w = e.length
+            temp_lgP[:] += self.lg_factor[v][:]
+
+            transition_matrix = np.transpose(self.get_transition_matrix(w))
+            temp_dpP *= np.matmul(self.dp[v], transition_matrix)
+
+        P = np.matmul(temp_dpP, self.pi)
+        parent = -1
+
+        temp_dp = np.ones(shape=self.dp[root].shape)
+        temp_lg = np.zeros(shape=self.lg_factor[root].shape)
+        for e in self.tree.adjList[root]:
+            if e is None or e.id == -1:
+                break
+            if e.dest == parent:
+                continue
+            if e.id == edge_id:
+                continue
+            v = e.dest
+            w = e.length
+            temp_lg += self.lg_factor[v][:]
+
+            transition_matrix = np.transpose(self.get_transition_matrix(w))
+            temp_dp *= np.matmul(self.dp[v], transition_matrix)
+
+        for e in self.tree.adjList[root]:
+            if e is None or e.id == -1:
+                break
+            if e.dest == parent:
+                continue
+            if e.id != edge_id:
+                continue
+            v = e.dest
+            w = e.length
+
+            transition_matrix = np.transpose(self.get_derivative_transition_matrix(w))
+            temp_dp *= np.matmul(self.dp[v], transition_matrix)
+
+        D = np.matmul(temp_dp, self.pi)
+        ans = np.sum(D / P)
+
         return ans
 
