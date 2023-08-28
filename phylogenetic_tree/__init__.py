@@ -65,7 +65,7 @@ class PhylogeneticTree:
                     break
                 if not visited[e.dest]:
                     l.append(dfs(tree, e.dest, root) + ":" + str(e.length))
-            s = str(root)
+            s = self.node_names[root]
             if len(l) >= 1:
                 s = "(" + ','.join(l) + ")" + self.node_names[root]
             return s
@@ -102,7 +102,7 @@ class PhylogeneticTree:
                     break
                 if (not visited[e.dest]):
                     l.append(dfs(tree, e.dest, root) + ":" + str(e.length / f))
-            s = str(root)
+            s = self.node_names[root]
             if len(l) >= 1:
                 s = "(" + ','.join(l) + ")" + self.node_names[root]
             return s
@@ -114,7 +114,7 @@ class PhylogeneticTree:
             lines = fp.readlines()
             species = lines[1].strip().split()
             for i in range(1,len(species)+1):
-                self.node_names[i] = species[i]
+                self.node_names[i] = species[i-1]
 
     def __repr__(self):
         p = "lamda: {},\
