@@ -1,8 +1,10 @@
 import io
 
 import numpy as np
+import ete3
 from Bio import Phylo
 from dataclasses import dataclass
+
 
 @dataclass
 class Edge:
@@ -273,3 +275,13 @@ def find_optimal_K(tree_original, tree_estimate):
     e_original = np.array([e.length for e in tree_original.edges])
     e_estimate = np.array([e.length for e in tree_estimate.edges])
     return np.sum(e_original * e_estimate) / np.sum(e_estimate * e_estimate)
+
+"""
+find the robinson foulds distance between two trees
+"""
+def rf_distance(tree1, tree2):
+    t1 = ete3.Tree(tree1.get_ete3_newick() + ';')
+    t2 = ete3.Tree(tree2.get_ete3_newick() + ';')
+
+    return t1.robinson_foulds(t2)[0]
+
