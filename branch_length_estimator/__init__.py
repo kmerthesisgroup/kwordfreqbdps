@@ -9,6 +9,7 @@ from scipy import optimize
 import phylogenetic_tree
 from felsenstein_pruner import gen_censored_linear_bdps_qmat, FelsensteinPruner
 from phylogenetic_tree import initialize_tree_with_random_branch_lengths
+import bdps_parameter_estimator as bpe
 
 
 def estimate_branch_length(tree, lower, upper, max_kmer_count,
@@ -16,9 +17,14 @@ def estimate_branch_length(tree, lower, upper, max_kmer_count,
                                          lprecisson=np.float32(0.0001), seed_tree=False, logfile=None):
     if not seed_tree:
         initialize_tree_with_random_branch_lengths(tree, lower, upper)
+    
+
+    lnpi = bpe.gen_ln_pi_array(tree.lamda, tree.m/tree.lamda, max_kmer_count)
+    pi = np.e**lnpi
+    pi = pi/np.sum(pi)
 
     Q = gen_censored_linear_bdps_qmat(tree.lamda, tree.m, tree.mu, max_kmer_count)
-    pruner = FelsensteinPruner(tree, qmat=Q)
+    pruner = FelsensteinPruner(tree, qmat=Q, pi=pi)
 
     it = 0
 
